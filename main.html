@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trắc nghiệm máy biến áp</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 16px; min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg, #eaf2ff, #f5f7fb);
+    color: #182235;
+  }
+  .container {
+    max-width: 820px; margin: 0 auto; background: #fff;
+    border-radius: 20px; padding: 28px;
+    box-shadow: 0 12px 36px rgba(35, 61, 105, .12);
+  }
+  header { text-align: center; margin-bottom: 24px; }
+  .tag { color: #2563eb; font-weight: 700; font-size: 13px; letter-spacing: 1px; }
+  h1 { margin: 10px 0; font-size: clamp(25px, 5vw, 34px); }
+  .intro { color: #64748b; line-height: 1.5; margin: 0; }
+  .progress-wrap { background: #e8edf5; height: 9px; border-radius: 20px; overflow: hidden; margin: 22px 0 8px; }
+  #progress { height: 100%; width: 0; background: #2563eb; transition: width .25s; }
+  .progress-text { display: flex; justify-content: space-between; color: #64748b; font-size: 13px; }
+  .question { margin-top: 26px; }
+  .question h2 { font-size: 19px; line-height: 1.5; margin: 0 0 15px; }
+  .option {
+    display: block; width: 100%; text-align: left; padding: 14px 16px;
+    margin: 10px 0; border: 1.5px solid #dbe3ef; border-radius: 12px;
+    background: #fff; color: #263449; font-size: 15px; cursor: pointer;
+    transition: .15s;
+  }
+  .option:hover:not(:disabled) { border-color: #6694ef; background: #f5f8ff; }
+  .option.selected { border-color: #2563eb; background: #eff6ff; }
+  .option.correct { border-color: #16a34a; background: #f0fdf4; color: #166534; }
+  .option.wrong { border-color: #dc2626; background: #fef2f2; color: #991b1b; }
+  .option:disabled { cursor: default; }
+  .feedback { min-height: 24px; margin: 12px 0; font-weight: 700; }
+  .actions { display: flex; gap: 10px; justify-content: space-between; margin-top: 22px; }
+  .btn {
+    border: 0; border-radius: 11px; padding: 13px 20px; font-weight: 700;
+    font-size: 15px; cursor: pointer;
+  }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-primary:disabled { background: #a8bce5; cursor: not-allowed; }
+  .btn-secondary { background: #edf2f8; color: #334155; }
+  #result { display: none; text-align: center; padding: 22px 0 8px; }
+  .score { font-size: 54px; font-weight: 800; color: #2563eb; margin: 12px 0; }
+  .result-note { color: #64748b; line-height: 1.6; }
+  .review { text-align: left; margin-top: 24px; }
+  .review-item { border-top: 1px solid #e5eaf1; padding: 14px 0; line-height: 1.5; }
+  .review-item strong { display: block; margin-bottom: 5px; }
+  @media (max-width: 520px) {
+    .container { padding: 20px 16px; }
+    .actions { flex-direction: column-reverse; }
+    .btn { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<main class="container">
+  <header>
+    <div class="tag">BÀI KIỂM TRA VẬT LÝ</div>
+    <h1>⚡ Trắc nghiệm máy biến áp</h1>
+    <p class="intro">10 câu hỏi về cấu tạo, nguyên tắc hoạt động, truyền tải điện năng và ứng dụng của máy biến áp.</p>
+  </header>
+
+  <section id="quiz">
+    <div class="progress-wrap"><div id="progress"></div></div>
+    <div class="progress-text"><span id="counter">Câu 1 / 10</span><span id="answered">Đã trả lời: 0/10</span></div>
+    <div class="question">
+      <h2 id="questionText"></h2>
+      <div id="options"></div>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="restart" type="button">Làm lại</button>
+      <button class="btn btn-primary" id="next" type="button" disabled>Câu tiếp theo →</button>
+    </div>
+  </section>
+
+  <section id="result">
+    <div class="tag">HOÀN THÀNH BÀI KIỂM TRA</div>
+    <h2>Kết quả của bạn</h2>
+    <div class="score" id="score"></div>
+    <p class="result-note" id="resultNote"></p>
+    <div class="review" id="review"></div>
+    <button class="btn btn-primary" id="playAgain" type="button">Làm lại bài kiểm tra</button>
+  </section>
+</main>
+
+<script>
+const questions = [
+  {
+    q: "Máy biến áp được sử dụng trong truyền tải điện năng đi xa nhằm mục đích gì?",
+    a: ["Tăng công suất hao phí trên đường dây.", "Giảm hiệu điện thế truyền tải.", "Giảm công suất hao phí bằng cách tăng hiệu điện thế.", "Làm thay đổi tần số dòng điện."],
+    correct: 2,
+    explain: "Tăng điện áp giúp giảm cường độ dòng điện khi truyền cùng công suất, từ đó giảm hao phí trên đường dây."
+  },
+  {
+    q: "Máy biến áp gồm những bộ phận chính nào?",
+    a: ["Lõi thép và hai cuộn dây dẫn.", "Nam châm và pin điện.", "Một cuộn dây và một điện trở.", "Lõi nhôm và tụ điện."],
+    correct: 0,
+    explain: "Hai bộ phận chính của máy biến áp là lõi thép và hai cuộn dây: sơ cấp, thứ cấp."
+  },
+  {
+    q: "Máy biến áp là thiết bị dùng để làm gì?",
+    a: ["Biến đổi điện áp xoay chiều.", "Biến đổi điện áp một chiều.", "Biến đổi điện năng thành nhiệt năng.", "Biến đổi dòng điện thành cơ năng."],
+    correct: 0,
+    explain: "Máy biến áp dùng để tăng hoặc giảm điện áp xoay chiều."
+  },
+  {
+    q: "Nguyên tắc hoạt động của máy biến áp dựa trên hiện tượng nào?",
+    a: ["Hiện tượng phản xạ ánh sáng.", "Hiện tượng cảm ứng điện từ.", "Hiện tượng quang điện.", "Hiện tượng nhiễm điện do cọ xát."],
+    correct: 1,
+    explain: "Dòng điện xoay chiều ở cuộn sơ cấp tạo ra từ thông biến thiên, gây ra suất điện động cảm ứng ở cuộn thứ cấp."
+  },
+  {
+    q: "Trong máy biến áp, cuộn dây nối với nguồn điện xoay chiều được gọi là gì?",
+    a: ["Cuộn thứ cấp.", "Cuộn sơ cấp.", "Cuộn cảm.", "Cuộn tải."],
+    correct: 1,
+    explain: "Cuộn sơ cấp được nối với nguồn điện xoay chiều."
+  },
+  {
+    q: "Một máy biến áp có số vòng dây cuộn sơ cấp lớn hơn cuộn thứ cấp (N₁ > N₂). Đây là loại máy nào?",
+    a: ["Máy tăng áp.", "Máy hạ áp.", "Máy phát điện.", "Máy chỉnh lưu."],
+    correct: 1,
+    explain: "Với máy biến áp lý tưởng, N₁ > N₂ thì U₁ > U₂, nên đây là máy hạ áp."
+  },
+  {
+    q: "Trong máy biến áp lý tưởng, nếu điện áp thứ cấp tăng thì cường độ dòng điện thứ cấp thay đổi như thế nào khi công suất không đổi?",
+    a: ["Tăng lên.", "Giảm xuống.", "Không thay đổi.", "Bằng 0."],
+    correct: 1,
+    explain: "Vì công suất lý tưởng gần như được bảo toàn (U₁I₁ = U₂I₂), điện áp tăng thì dòng điện giảm tương ứng."
+  },
+  {
+    q: "Tại sao máy biến áp được sử dụng trong các trạm biến áp điện?",
+    a: ["Để thay đổi tần số dòng điện.", "Để tăng hoặc giảm điện áp phù hợp với nhu cầu sử dụng.", "Để tạo ra điện năng.", "Để biến đổi dòng điện xoay chiều thành một chiều."],
+    correct: 1,
+    explain: "Máy biến áp giúp nâng điện áp khi truyền tải và hạ điện áp xuống mức phù hợp trước khi phân phối, sử dụng."
+  },
+  {
+    q: "Máy biến áp có N₁ = 1000 vòng, N₂ = 500 vòng và U₁ = 220 V. Điện áp thứ cấp U₂ bằng bao nhiêu?",
+    a: ["55 V.", "110 V.", "220 V.", "440 V."],
+    correct: 1,
+    explain: "U₂ = U₁ × N₂/N₁ = 220 × 500/1000 = 110 V."
+  },
+  {
+    q: "Đâu là một ứng dụng thực tế của máy biến áp?",
+    a: ["Bộ nguồn phù hợp dùng để sạc điện thoại.", "Đo nhiệt độ cơ thể.", "Đo khối lượng vật.", "Chiếu sáng bằng nến."],
+    correct: 0,
+    explain: "Nhiều bộ nguồn, bộ sạc sử dụng mạch biến áp để chuyển đổi mức điện áp phù hợp."
+  }
+];
+
+let current = 0;
+let answers = Array(questions.length).fill(null);
+let locked = false;
+
+const questionText = document.getElementById("questionText");
+const optionsEl = document.getElementById("options");
+const feedbackEl = document.getElementById("feedback");
+const nextBtn = document.getElementById("next");
+
+function renderQuestion() {
+  locked = false;
+  const item = questions[current];
+  document.getElementById("counter").textContent = `Câu ${current + 1} / ${questions.length}`;
+  document.getElementById("answered").textContent = `Đã trả lời: ${answers.filter(x => x !== null).length}/${questions.length}`;
+  document.getElementById("progress").style.width = `${(current / questions.length) * 100}%`;
+  questionText.textContent = item.q;
+  optionsEl.innerHTML = "";
+  feedbackEl.textContent = "";
+  nextBtn.disabled = true;
+  nextBtn.textContent = current === questions.length - 1 ? "Xem kết quả" : "Câu tiếp theo →";
+
+  item.a.forEach((choice, index) => {
+    const button = document.createElement("button");
+    button.className = "option";
+    button.type = "button";
+    button.textContent = `${String.fromCharCode(65 + index)}. ${choice}`;
+    button.addEventListener("click", () => chooseAnswer(index));
+    optionsEl.appendChild(button);
+  });
+}
+
+function chooseAnswer(index) {
+  if (locked) return;
+  locked = true;
+  answers[current] = index;
+  const item = questions[current];
+  const buttons = [...optionsEl.querySelectorAll("button")];
+
+  buttons.forEach((button, i) => {
+    button.disabled = true;
+    if (i === item.correct) button.classList.add("correct");
+    if (i === index && i !== item.correct) button.classList.add("wrong");
+  });
+
+  if (index === item.correct) {
+    feedbackEl.textContent = "✓ Chính xác! " + item.explain;
+    feedbackEl.style.color = "#15803d";
+  } else {
+    feedbackEl.textContent = `Chưa chính xác. Đáp án đúng là ${String.fromCharCode(65 + item.correct)}. ${item.explain}`;
+    feedbackEl.style.color = "#b91c1c";
+  }
+  document.getElementById("answered").textContent = `Đã trả lời: ${answers.filter(x => x !== null).length}/${questions.length}`;
+  nextBtn.disabled = false;
+}
+
+function showResult() {
+  const score = answers.reduce((sum, answer, i) => sum + (answer === questions[i].correct ? 1 : 0), 0);
+  document.getElementById("quiz").style.display = "none";
+  document.getElementById("result").style.display = "block";
+  document.getElementById("score").textContent = `${score}/${questions.length}`;
+  document.getElementById("resultNote").textContent =
+    score === 10 ? "Xuất sắc! Bạn đã trả lời đúng tất cả câu hỏi." :
+    score >= 7 ? "Làm tốt lắm! Hãy xem lại những câu chưa đúng nhé." :
+    score >= 5 ? "Bạn đã nắm được một phần kiến thức. Hãy ôn tập thêm nhé." :
+    "Hãy xem lại phần kiến thức về máy biến áp và thử lại nhé.";
+
+  const review = document.getElementById("review");
+  review.innerHTML = "<h3>Đáp án và giải thích</h3>";
+  questions.forEach((item, i) => {
+    const correct = answers[i] === item.correct;
+    const div = document.createElement("div");
+    div.className = "review-item";
+    const title = document.createElement("strong");
+    title.textContent = `${i + 1}. ${correct ? "✓ Đúng" : "✗ Sai"} — Đáp án ${String.fromCharCode(65 + item.correct)}`;
+    const detail = document.createElement("span");
+    detail.textContent = item.explain;
+    div.append(title, detail);
+    review.appendChild(div);
+  });
+}
+
+nextBtn.addEventListener("click", () => {
+  if (!locked) return;
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+});
+
+function restartQuiz() {
+  current = 0;
+  answers = Array(questions.length).fill(null);
+  document.getElementById("quiz").style.display = "block";
+  document.getElementById("result").style.display = "none";
+  renderQuestion();
+}
+document.getElementById("restart").addEventListener("click", restartQuiz);
+document.getElementById("playAgain").addEventListener("click", restartQuiz);
+renderQuestion();
+</script>
+</body>
+</html>
